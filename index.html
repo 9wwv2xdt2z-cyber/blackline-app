@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Blackline Kitchens</title>
+
+	<style>
+		body {
+			font-family: Helvetica, Arial, sans-serif;
+			background: #0f0f0f;
+			color: white;
+			padding: 15px;
+		}
+
+		.logo {
+			display: block;
+			margin: 0 auto 20px auto;
+			width: 260px;
+		}
+
+		h1 {
+			text-align: center;
+			color: #c6a46c;
+			letter-spacing: 2px;
+		}
+
+		.nav {
+			display: flex;
+			justify-content: space-around;
+			margin-bottom: 20px;
+		}
+
+		button {
+			padding: 12px;
+			border: 1px solid #c6a46c;
+			background: #1a1a1a;
+			color: white;
+			border-radius: 10px;
+		}
+
+		button:hover {
+			background: #c6a46c;
+			color: black;
+		}
+
+		.big-btn {
+			width: 100%;
+			background: #c6a46c;
+			color: black;
+			font-weight: bold;
+			margin-top: 10px;
+		}
+
+		input {
+			width: 100%;
+			padding: 12px;
+			margin: 6px 0;
+			background: #1a1a1a;
+			border: 1px solid #c6a46c;
+			color: white;
+			border-radius: 8px;
+		}
+
+		label {
+			color: #c6a46c;
+		}
+
+		.section {
+			margin-bottom: 20px;
+		}
+
+		.total {
+			font-size: 30px;
+			color: #c6a46c;
+		}
+	</style>
+</head>
+
+<body>
+
+	<img class="logo" src="data:image/png;base64,
+iVBORw0KGgoAAAANSUhEUgAAAoAAAAHgCAYAAAD5...
+...FULL CLEAN BASE64 LOGO DATA CONTINUES HERE...
+...ENDING CLEANLY WITHOUT SPACES...
+">
+
+	<h1>Blackline Kitchens</h1>
+
+	<div class="nav">
+		<button onclick="showPage('calc')">Calculator</button>
+		<button onclick="showPage('settings')">Settings</button>
+	</div>
+
+	<div id="calc">
+
+		<input id="name" placeholder="Customer Name">
+		<input id="address" placeholder="Address">
+
+		<div class="section">
+			<h3>Kitchen Size</h3>
+			<button onclick="setBase('small')">Small</button>
+			<button onclick="setBase('medium')">Medium</button>
+			<button onclick="setBase('large')">Large</button>
+		</div>
+
+		<div class="section">
+			<h3>Add Items</h3>
+			<button onclick="addItem('Worktop','worktop')">Worktop</button>
+			<button onclick="addItem('Appliance','appliance')">Appliance</button>
+			<button onclick="addItem('Sink and Tap','sink')">Sink and Tap</button>
+			<button onclick="addItem('Rip Out','ripout')">Rip Out</button>
+			<button onclick="addItem('Island','island')">Island</button>
+		</div>
+
+		<div class="section">
+			<h3>Plumbing</h3>
+			<button onclick="addItem('Plumbing Basic','plumbBasic')">Basic</button>
+			<button onclick="addItem('Plumbing Medium','plumbMed')">Medium</button>
+			<button onclick="addItem('Plumbing Large','plumbLarge')">Large</button>
+		</div>
+
+		<div class="section">
+			<h3>Electrics</h3>
+			<button onclick="addItem('Electrics Basic','elecBasic')">Basic</button>
+			<button onclick="addItem('Electrics Medium','elecMed')">Medium</button>
+			<button onclick="addItem('Electrics Large','elecLarge')">Large</button>
+		</div>
+
+		<div class="section">
+			<h3>Margin: <span id="marginVal"></span>%</h3>
+			<input type="range" min="0" max="30" id="marginSlider" onchange="setMargin(this.value)">
+		</div>
+
+		<ul id="items"></ul>
+
+		<div class="total">Total: £<span id="total">0</span></div>
+
+		<button class="big-btn" onclick="generatePDF()">Generate Showroom Quote</button>
+
+	</div>
+
+	<div id="settings" style="display:none">
+
+		<h2 style="color:#c6a46c;">Pricing Settings</h2>
+
+		<div class="section">
+			<label>Small Kitchen</label><input id="small">
+			<label>Medium Kitchen</label><input id="medium">
+			<label>Large Kitchen</label><input id="large">
+		</div>
+
+		<div class="section">
+			<label>Worktop</label><input id="worktop">
+			<label>Appliance</label><input id="appliance">
+			<label>Sink and Tap</label><input id="sink">
+			<label>Rip Out</label><input id="ripout">
+			<label>Island</label><input id="island">
+		</div>
+
+		<button class="big-btn" onclick="saveSettings()">Save Settings</button>
+
+	</div>
+
+	<script>
+		let settings = JSON.parse(localStorage.getItem("settings")) || {
+			small: 1500,
+			medium: 2000,
+			large: 2600,
+			worktop: 400,
+			appliance: 100,
+			sink: 200,
+			ripout: 400,
+			island: 200,
+			plumbBasic: 200,
+			plumbMed: 400,
+			plumbLarge: 800,
+			elecBasic: 200,
+			elecMed: 400,
+			elecLarge: 800,
+			margin: 15
+		};
+
+		let base = 0;
+		let items = [];
+
+		function showPage(p) {
+			document.getElementById("calc").style.display = p === "calc" ? "block" : "none";
+			document.getElementById("settings").style.display = p === "settings" ? "block" : "none";
+		}
+
+		function setBase(type) { base = settings[type];
+			calculate(); }
+
+		function addItem(name, key) {
+			items.push({ name, price: settings[key] });
+			renderItems();
+			calculate();
+		}
+
+		function renderItems() {
+			let list = document.getElementById("items");
+			list.innerHTML = "";
+			items.forEach(i => {
+				let li = document.createElement("li");
+				li.innerText = i.name + " - £" + i.price;
+				list.appendChild(li);
+			});
+		}
+
+		function setMargin(val) {
+			settings.margin = parseInt(val);
+			document.getElementById("marginVal").innerText = val;
+			calculate();
+		}
+
+		function calculate() {
+			let subtotal = base + items.reduce((s, i) => s + i.price, 0);
+			let total = subtotal + (subtotal * (settings.margin / 100));
+			document.getElementById("total").innerText = Math.round(total);
+		}
+
+		function saveSettings() {
+			document.querySelectorAll("#settings input").forEach(i => {
+				settings[i.id] = parseInt(i.value) || 0;
+			});
+			localStorage.setItem("settings", JSON.stringify(settings));
+			alert("Saved");
+		}
+	</script>
+
+</body>
+
+</html>
